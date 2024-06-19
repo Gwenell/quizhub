@@ -3,11 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Player</title>
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+            socket.on('notification', function(data) {
+                const pageId = "{{ page_id }}";
+                if (data.page_id === pageId) {
+                    document.getElementById('notifications').innerText = data.notification;
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <h1>Player Page</h1>
     {% if connected %}
         <p>Connected as {{ pseudo }}</p>
+        <div id="notifications"></div>
     {% else %}
         <form method="post">
             <label for="key">Enter Key:</label>
