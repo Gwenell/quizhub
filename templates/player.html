@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Player</title>
+</head>
+<body>
+    <h1>Player Page</h1>
+    {% if connected %}
+        <p>Connected as {{ pseudo }}</p>
+    {% else %}
+        <form method="post">
+            <label for="key">Enter Key:</label>
+            <input type="text" id="key" name="key" required>
+            <label for="pseudo">Enter Pseudo:</label>
+            <input type="text" id="pseudo" name="pseudo" required>
+            <button type="submit">Join</button>
+        </form>
+        {% if error %}
+            <p>{{ error }}</p>
+        {% endif %}
+    {% endif %}
+</body>
+</html>
