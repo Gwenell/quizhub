@@ -1,130 +1,122 @@
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO
+from flask_migrate import Migrate
+from flask_socketio import SocketIO, emit
+from flask_wtf import FlaskForm
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
+from werkzeug.security import generate_password_hash, check_password_hash
 import random
 import string
-import logging
+from config import Config
+from models import db, User, Quiz, Question, Option
+from forms import LoginForm, QuizForm, QuestionForm
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key'
-db = SQLAlchemy(app)
+app.config.from_object(Config)
+db.init_app(app)
+migrate = Migrate(app, db)
 socketio = SocketIO(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'admin_login'
 
-logging.basicConfig(level=logging.DEBUG)
+admin_created = False
 
-
-class TemporaryKey(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    page_id = db.Column(db.String(50), unique=True, nullable=False)
-    key = db.Column(db.String(10), unique=True, nullable=False)
-    notification = db.Column(db.String(50), nullable=True)
-
-
-class Player(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    page_id = db.Column(db.String(50), nullable=False)
-    pseudo = db.Column(db.String(50), unique=True, nullable=False)
-
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(int(id))
 
 @app.before_request
-def create_tables():
-    if not hasattr(app, 'tables_created'):
-        db.create_all()
-        app.tables_created = True
-
-
-@app.route('/reinitialize_db')
-def reinitialize_db():
-    db.drop_all()
-    db.create_all()
-    return "Database reinitialized"
-
-
-def generate_key(length=6):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
+def create_admin():
+    global admin_created
+    if not admin_created:
+        if not User.query.filter_by(username='Admin').first():
+            admin = User(username='Admin', password=generate_password_hash('admin'))
+            db.session.add(admin)
+            db.session.commit()
+        admin_created = True
 
 @app.route('/')
 def home():
-    return "Welcome to QuizHub! Please go to /admin or /player"
+    return render_template('player/home.html')
 
+@app.route('/join', methods=['POST'])
+def join():
+    session['quiz_code'] = request.form['quiz_code']
+    session['username'] = request.form['username']
+    return redirect(url_for('player'))
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    if request.method == 'POST':
-        page_id = "ADMIN_PAGE_ID"
-        session['page_id'] = page_id
-
-        existing_key = TemporaryKey.query.filter_by(page_id=page_id).first()
-        if existing_key:
-            db.session.delete(existing_key)
-            db.session.commit()
-
-        new_key = TemporaryKey(page_id=page_id, key=generate_key())
-        db.session.add(new_key)
-        db.session.commit()
-
-        return render_template('admin.html', key=new_key.key, page_id=page_id)
-
-    key_entry = TemporaryKey.query.filter_by(page_id="ADMIN_PAGE_ID").first()
-    key = key_entry.key if key_entry else None
-    return render_template('admin.html', key=key, page_id="ADMIN_PAGE_ID")
-
-
-@app.route('/player', methods=['GET', 'POST'])
+@app.route('/player')
 def player():
-    if request.method == 'POST':
-        key = request.form['key']
-        pseudo = request.form['pseudo']
-        temp_key = TemporaryKey.query.filter_by(key=key, page_id="ADMIN_PAGE_ID").first()
-        if temp_key:
-            try:
-                new_player = Player(page_id=temp_key.page_id, pseudo=pseudo)
-                db.session.add(new_player)
-                db.session.commit()
-                session['page_id'] = new_player.page_id
-                return render_template('player.html', connected=True, pseudo=pseudo, page_id=new_player.page_id)
-            except Exception as e:
-                logging.error(f"Error adding player: {e}")
-                return render_template('player.html', error="Pseudo already in use or other database error")
+    if 'quiz_code' not in session or 'username' not in session:
+        return redirect(url_for('home'))
+    return render_template('player/quiz.html', username=session['username'])
+
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    if current_user.is_authenticated:
+        return redirect(url_for('manage_quizzes'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            return redirect(url_for('manage_quizzes'))
         else:
-            return render_template('player.html', error="Invalid key")
+            flash('Invalid username or password')
+    return render_template('admin/admin_login.html', form=form)
 
-    return render_template('player.html')
+@app.route('/admin_logout')
+def admin_logout():
+    logout_user()
+    return redirect(url_for('admin_login'))
 
+@app.route('/manage_quizzes')
+@login_required
+def manage_quizzes():
+    quizzes = Quiz.query.all()
+    return render_template('admin/manage_quizzes.html', quizzes=quizzes)
 
-@app.route('/notify', methods=['POST'])
-def notify():
-    try:
-        players = Player.query.all()
-        for player in players:
-            notification = f"Notification for {player.pseudo}"
-            socketio.emit('notification', {'page_id': player.page_id, 'notification': notification}, namespace='/', broadcast=True)
-        temp_key = TemporaryKey.query.filter_by(page_id="ADMIN_PAGE_ID").first()
-        temp_key.notification = "Notification sent to all players"
+@app.route('/create_quiz', methods=['GET', 'POST'])
+@login_required
+def create_quiz():
+    form = QuizForm()
+    if form.validate_on_submit():
+        quiz = Quiz(title=form.title.data, description=form.description.data)
+        db.session.add(quiz)
         db.session.commit()
-        return "Notification sent to all players", 200
-    except Exception as e:
-        logging.error(f"Error sending notifications: {e}")
-        return "Error sending notifications", 500
+        return redirect(url_for('manage_quizzes'))
+    return render_template('admin/create_quiz.html', form=form)
 
+@app.route('/add_question/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def add_question(quiz_id):
+    form = QuestionForm()
+    if form.validate_on_submit():
+        question = Question(text=form.text.data, quiz_id=quiz_id)
+        db.session.add(question)
+        db.session.commit()
+        for i in range(1, 5):
+            option_text = getattr(form, f'option{i}').data
+            option = Option(text=option_text, question_id=question.id)
+            db.session.add(option)
+            if i == int(form.correct_option.data):
+                question.correct_option_id = option.id
+        db.session.commit()
+        return redirect(url_for('manage_quizzes'))
+    return render_template('admin/add_question.html', form=form)
 
-@app.route('/notifications/<page_id>', methods=['GET'])
-def get_notifications(page_id):
-    temp_key = TemporaryKey.query.filter_by(page_id=page_id).first()
-    if temp_key:
-        return jsonify(notification=temp_key.notification), 200
-    return jsonify(notification="No notifications"), 404
+@app.route('/start_quiz/<int:quiz_id>')
+@login_required
+def start_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    # Logic to start quiz and notify players
+    socketio.emit('start_quiz', {'quiz_id': quiz_id}, broadcast=True)
+    return redirect(url_for('manage_quizzes'))
 
-
-@app.route('/connected_users', methods=['GET'])
-def connected_users():
-    players = Player.query.all()
-    users_list = [{"pseudo": player.pseudo, "page_id": player.page_id} for player in players]
-    return jsonify(users=users_list), 200
-
+@app.route('/scoreboard')
+def scoreboard():
+    # Logic to display scores
+    return render_template('player/scoreboard.html')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

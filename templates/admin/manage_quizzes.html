@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Manage Quizzes{% endblock %}
+{% block content %}
+<h2>Manage Quizzes</h2>
+<a href="{{ url_for('create_quiz') }}">Create New Quiz</a>
+<ul>
+    {% for quiz in quizzes %}
+        <li>
+            <strong>{{ quiz.title }}</strong>
+            <a href="{{ url_for('add_question', quiz_id=quiz.id) }}">Add Question</a>
+            <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}">Start Quiz</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

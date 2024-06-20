@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<form action="{{ url_for('join') }}" method="post">
+    <label for="quiz_code">Quiz Code:</label>
+    <input type="text" id="quiz_code" name="quiz_code" required>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <button type="submit">Join Quiz</button>
+</form>
+<p>Are you an admin? <a href="{{ url_for('admin_login') }}">Login here</a></p>
+{% endblock %}
