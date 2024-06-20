@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, session
+from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_socketio import SocketIO, emit
@@ -87,6 +87,34 @@ def create_quiz():
         return redirect(url_for('manage_quizzes'))
     return render_template('admin/create_quiz.html', form=form)
 
+@app.route('/edit_quiz/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def edit_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    form = QuizForm(obj=quiz)
+    if form.validate_on_submit():
+        quiz.title = form.title.data
+        quiz.description = form.description.data
+        db.session.commit()
+        return redirect(url_for('manage_quizzes'))
+    return render_template('admin/edit_quiz.html', form=form, quiz=quiz)
+
+@app.route('/delete_question/<int:question_id>', methods=['POST'])
+@login_required
+def delete_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    db.session.delete(question)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/delete_quiz/<int:quiz_id>', methods=['POST'])
+@login_required
+def delete_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    db.session.delete(quiz)
+    db.session.commit()
+    return jsonify({'success': True})
+
 @app.route('/add_question/<int:quiz_id>', methods=['GET', 'POST'])
 @login_required
 def add_question(quiz_id):
@@ -102,20 +130,18 @@ def add_question(quiz_id):
             if i == int(form.correct_option.data):
                 question.correct_option_id = option.id
         db.session.commit()
-        return redirect(url_for('manage_quizzes'))
+        return redirect(url_for('edit_quiz', quiz_id=quiz_id))
     return render_template('admin/add_question.html', form=form)
 
 @app.route('/start_quiz/<int:quiz_id>')
 @login_required
 def start_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
-    # Logic to start quiz and notify players
     socketio.emit('start_quiz', {'quiz_id': quiz_id}, broadcast=True)
     return redirect(url_for('manage_quizzes'))
 
 @app.route('/scoreboard')
 def scoreboard():
-    # Logic to display scores
     return render_template('player/scoreboard.html')
 
 if __name__ == '__main__':

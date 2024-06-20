@@ -2,14 +2,28 @@
 {% block title %}Manage Quizzes{% endblock %}
 {% block content %}
 <h2>Manage Quizzes</h2>
-<a href="{{ url_for('create_quiz') }}">Create New Quiz</a>
-<ul>
-    {% for quiz in quizzes %}
-        <li>
-            <strong>{{ quiz.title }}</strong>
-            <a href="{{ url_for('add_question', quiz_id=quiz.id) }}">Add Question</a>
-            <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}">Start Quiz</a>
-        </li>
-    {% endfor %}
-</ul>
+<a href="{{ url_for('create_quiz') }}" class="btn btn-primary">Create New Quiz</a>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for quiz in quizzes %}
+        <tr>
+            <td>{{ quiz.title }}</td>
+            <td>{{ quiz.description }}</td>
+            <td>
+                <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}" class="btn btn-play">
+                    <img src="{{ url_for('static', filename='img/play_icon.png') }}" alt="Start Quiz" style="height: 20px;">
+                </a>
+                <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-edit">Modify</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

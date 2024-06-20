@@ -1,13 +1,14 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background-color: #121212;
+    color: #ffffff;
     margin: 0;
     padding: 0;
 }
 
 header {
-    background-color: #333;
-    color: #fff;
+    background-color: #333333;
+    color: #ff8c00;
     padding: 1rem;
     text-align: center;
 }
@@ -19,10 +20,10 @@ main {
 form {
     max-width: 500px;
     margin: 0 auto;
-    background: #fff;
+    background: #1e1e1e;
     padding: 1rem;
     border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 form div {
@@ -42,12 +43,20 @@ form input, form textarea, form button {
 }
 
 form button {
-    background-color: #007bff;
+    background-color: #ff8c00;
     color: #fff;
     border: none;
     cursor: pointer;
 }
 
 form button:hover {
-    background-color: #0056b3;
+    background-color: #e07b00;
+}
+
+a {
+    color: #ff8c00;
+}
+
+a:hover {
+    color: #e07b00;
 }
