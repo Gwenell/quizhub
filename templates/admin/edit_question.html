@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Question{% endblock %}
+
+{% block content %}
+<h1>Edit Question</h1>
+<a class="back-arrow" href="{{ url_for('admin.view_quiz', quiz_id=question.quiz_id) }}">&larr; Back</a>
+<form method="post" action="{{ url_for('admin.edit_question', question_id=question.id) }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.text.label }} {{ form.text(size=100) }}
+    </div>
+    <div>
+        {{ form.type.label }} {{ form.type() }}
+    </div>
+    <div class="answers-container">
+        {% for subform in form.answers %}
+        <div>
+            {{ subform.answer.label }} {{ subform.answer(size=50) }}
+            {{ subform.correct() }}
+        </div>
+        {% endfor %}
+    </div>
+    <div>
+        {{ form.media_file.label }} {{ form.media_file() }}
+    </div>
+    <div>
+        {{ form.submit() }}
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Add Question{% endblock %}
+
+{% block content %}
+<h1>Add Question to Quiz ID: {{ quiz_id }}</h1>
+<form method="post" action="{{ url_for('admin.add_question', quiz_id=quiz_id) }}">
+    {{ form.hidden_tag() }}
+    {{ form.text.label }} {{ form.text(size=100) }}
+    {{ form.type.label }} {{ form.type() }}
+    {{ form.options.label }} {{ form.options(size=100) }}
+    {{ form.correct_option.label }} {{ form.correct_option(size=20) }}
+    {{ form.submit() }}
+</form>
+{% endblock %}

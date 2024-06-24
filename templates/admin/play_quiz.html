@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Play Quiz{% endblock %}
+
+{% block content %}
+<h1>Play Quiz: {{ quiz.title }}</h1>
+{% for question in questions %}
+    <div>
+        <p>{{ question.text }}</p>
+        {% if question.media_file %}
+            {% if question.media_file.endswith(('.png', '.jpg', '.jpeg')) %}
+                <img src="{{ url_for('static', filename='quizzes/' + quiz.title + '/' + question.media_file) }}" alt="Question Image">
+            {% elif question.media_file.endswith(('.mp4', '.webm', '.ogg')) %}
+                <video width="320" height="240" controls>
+                    <source src="{{ url_for('static', filename='quizzes/' + quiz.title + '/' + question.media_file) }}">
+                    Your browser does not support the video tag.
+                </video>
+            {% endif %}
+        {% endif %}
+        <!-- Options for answers go here -->
+    </div>
+{% endfor %}
+{% endblock %}

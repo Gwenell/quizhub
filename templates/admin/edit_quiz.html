@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Quiz{% endblock %}
+
+{% block content %}
+<h1>Edit Quiz</h1>
+<a class="back-arrow" href="{{ url_for('admin.dashboard') }}">&larr; Back</a>
+<form method="post" action="{{ url_for('admin.edit_quiz', quiz_id=quiz.id) }}">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.title.label }} {{ form.title(size=50) }}
+    </div>
+    <div>
+        {{ form.description.label }} {{ form.description(cols=50, rows=10) }}
+    </div>
+    <div>
+        {{ form.submit() }}
+    </div>
+</form>
+
+<h2>Add Question</h2>
+<form method="post" action="{{ url_for('admin.add_question', quiz_id=quiz.id) }}" enctype="multipart/form-data">
+    {{ question_form.hidden_tag() }}
+    <div>
+        {{ question_form.text.label }} {{ question_form.text(size=100) }}
+    </div>
+    <div>
+        {{ question_form.type.label }} {{ question_form.type() }}
+    </div>
+    <div class="answers-container">
+        {% for subform in question_form.answers %}
+        <div>
+            {{ subform.answer.label }} {{ subform.answer(size=50) }}
+            {{ subform.correct() }}
+        </div>
+        {% endfor %}
+    </div>
+    <div>
+        {{ question_form.media_file.label }} {{ question_form.media_file() }}
+    </div>
+    <div>
+        {{ question_form.submit() }}
+    </div>
+</form>
+
+<h2>Existing Questions</h2>
+<ul>
+    {% for question in questions %}
+    <li>
+        {{ question.text }}
+        <form method="post" action="{{ url_for('admin.delete_question', question_id=question.id) }}" style="display:inline;">
+            <button type="submit">Delete</button>
+        </form>
+        <a href="{{ url_for('admin.edit_question', question_id=question.id) }}">Edit</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

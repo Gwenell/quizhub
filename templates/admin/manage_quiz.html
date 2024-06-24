@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Quiz{% endblock %}
+
+{% block content %}
+<h1>Manage Quiz</h1>
+<ul>
+    {% for quiz in quizzes %}
+    <li>
+        <div class="dropdown">
+            {{ quiz.title }}
+            <div class="dropdown-content">
+                {% for question in quiz.questions %}
+                <div>
+                    {{ question.text }}
+                    <form method="post" action="{{ url_for('admin.delete_question', question_id=question.id) }}" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
+                    <a href="{{ url_for('admin.edit_question', question_id=question.id) }}">Edit</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

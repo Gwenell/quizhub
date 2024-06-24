@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1>Admin Dashboard</h1>
+<a href="{{ url_for('admin.create_quiz') }}">Create Quiz</a>
+<ul>
+    {% for quiz in quizzes %}
+    <li>
+        {{ quiz.title }}
+        <form method="post" action="{{ url_for('admin.delete_quiz', quiz_id=quiz.id) }}" style="display:inline;">
+            <button type="submit">Delete</button>
+        </form>
+        <a href="{{ url_for('admin.edit_quiz', quiz_id=quiz.id) }}">Edit</a>
+        <a href="{{ url_for('admin.view_quiz', quiz_id=quiz.id) }}">Play</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
