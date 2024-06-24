@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
-from models import db, Admin, Quiz
-from question_models import db as question_db, Question
+from extensions import db
+from models import Admin, Quiz
+from question_models import Question
 from forms import LoginForm, QuizForm, QuestionForm
 from werkzeug.security import check_password_hash
-import os
 from werkzeug.utils import secure_filename
+from utils import create_quiz_directory_and_db
+import os
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -44,15 +46,7 @@ def create_quiz():
         db.session.add(new_quiz)
         db.session.commit()
 
-        # Créer un répertoire pour le quiz
-        quiz_dir = os.path.join('quizzes', secure_filename(new_quiz.title))
-        os.makedirs(quiz_dir, exist_ok=True)
-
-        # Créer la base de données des questions pour ce quiz
-        quiz_db_path = os.path.join(quiz_dir, 'questions.db')
-        if not os.path.exists(quiz_db_path):
-            with app.app_context():
-                question_db.create_all()
+        create_quiz_directory_and_db(new_quiz.title)
 
         return redirect(url_for('admin.dashboard'))
     return render_template('admin/create_quiz.html', form=form)
@@ -70,7 +64,7 @@ def view_quiz(quiz_id):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
     quiz_db_path = os.path.join('quizzes', secure_filename(quiz.title), 'questions.db')
-    question_db.create_all(bind=quiz_db_path)
+    db.create_all(bind=quiz_db_path)
     questions = Question.query.all(bind=quiz_db_path)
     return render_template('admin/view_quiz.html', quiz=quiz, questions=questions)
 
@@ -97,7 +91,7 @@ def add_question(quiz_id):
     if form.validate_on_submit():
         quiz_dir = os.path.join('quizzes', secure_filename(quiz.title))
         quiz_db_path = os.path.join(quiz_dir, 'questions.db')
-        question_db.create_all(bind=quiz_db_path)
+        db.create_all(bind=quiz_db_path)
 
         media_file = None
         if form.media_file.data:
@@ -115,10 +109,10 @@ def add_question(quiz_id):
             correct_options=correct_options,
             media_file=media_file
         )
-        question_db.session.add(new_question)
-        question_db.session.commit(bind=quiz_db_path)
+        db.session.add(new_question)
+        db.session.commit(bind=quiz_db_path)
         return redirect(url_for('admin.edit_quiz', quiz_id=quiz_id))
-    return render_template('admin/edit_quiz.html', form=form, quiz=quiz, question_form=form)
+    return render_template('admin/edit_quiz.html', form=QuizForm(obj=quiz), quiz=quiz, question_form=form)
 
 @admin_bp.route('/quiz/<int:quiz_id>/delete', methods=['POST'])
 def delete_quiz(quiz_id):
@@ -150,7 +144,7 @@ def edit_question(question_id):
             media_path = os.path.join(quiz_dir, filename)
             form.media_file.data.save(media_path)
             question.media_file = filename
-        question_db.session.commit()
+        db.session.commit()
         return redirect(url_for('admin.view_quiz', quiz_id=question.quiz_id))
     return render_template('admin/edit_question.html', form=form, question=question)
 
@@ -160,8 +154,8 @@ def delete_question(question_id):
         return redirect(url_for('admin.login'))
     question = Question.query.get_or_404(question_id)
     quiz_id = question.quiz_id
-    question_db.session.delete(question)
-    question_db.session.commit()
+    db.session.delete(question)
+    db.session.commit()
     return redirect(url_for('admin.view_quiz', quiz_id=quiz_id))
 
 @admin_bp.route('/quiz/<int:quiz_id>/play')
@@ -170,6 +164,6 @@ def play_quiz(quiz_id):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
     quiz_db_path = os.path.join('quizzes', secure_filename(quiz.title), 'questions.db')
-    question_db.create_all(bind=quiz_db_path)
+    db.create_all(bind=quiz_db_path)
     questions = Question.query.all(bind=quiz_db_path)
     return render_template('admin/play_quiz.html', quiz=quiz, questions=questions)

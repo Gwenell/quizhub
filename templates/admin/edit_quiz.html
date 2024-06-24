@@ -28,12 +28,43 @@
         {{ question_form.type.label }} {{ question_form.type() }}
     </div>
     <div class="answers-container">
-        {% for subform in question_form.answers %}
+        {% if question_form.type.data == 'boolean' %}
         <div>
-            {{ subform.answer.label }} {{ subform.answer(size=50) }}
-            {{ subform.correct() }}
+            <input type="checkbox" name="correct_1"> True
         </div>
-        {% endfor %}
+        <div>
+            <input type="checkbox" name="correct_2"> False
+        </div>
+        {% else %}
+        <div class="answer-row">
+            {% if question_form.answers|length > 0 %}
+            <div class="answer-item">
+                {{ question_form.answers[0].answer.label }} {{ question_form.answers[0].answer(size=50) }}
+                {{ question_form.answers[0].correct() }}
+            </div>
+            {% endif %}
+            {% if question_form.answers|length > 1 %}
+            <div class="answer-item">
+                {{ question_form.answers[1].answer.label }} {{ question_form.answers[1].answer(size=50) }}
+                {{ question_form.answers[1].correct() }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="answer-row">
+            {% if question_form.answers|length > 2 %}
+            <div class="answer-item">
+                {{ question_form.answers[2].answer.label }} {{ question_form.answers[2].answer(size=50) }}
+                {{ question_form.answers[2].correct() }}
+            </div>
+            {% endif %}
+            {% if question_form.answers|length > 3 %}
+            <div class="answer-item">
+                {{ question_form.answers[3].answer.label }} {{ question_form.answers[3].answer(size=50) }}
+                {{ question_form.answers[3].correct() }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
     <div>
         {{ question_form.media_file.label }} {{ question_form.media_file() }}
@@ -55,4 +86,8 @@
     </li>
     {% endfor %}
 </ul>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 {% endblock %}

@@ -1,10 +1,12 @@
 from flask import Flask, render_template, session
-from models import db, Admin
+from extensions import db
+from models import Admin, Quiz
 from config import Config
 from admin import admin_bp
 from player import player_bp
 from werkzeug.security import generate_password_hash
 from datetime import timedelta
+import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
