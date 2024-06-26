@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}View Quiz{% endblock %}
+{% block title %}{{ _('View Quiz') }}{% endblock %}
 
 {% block content %}
 <h1>{{ quiz.title }}</h1>
-<a class="back-arrow" href="{{ url_for('admin.dashboard') }}">&larr; Back</a>
+<a class="back-arrow" href="{{ url_for('admin.dashboard') }}">&larr; {{ _('Back') }}</a>
 <ul>
     {% for question in quiz.questions %}
     <li>
         {{ question.text }}
         <form method="post" action="{{ url_for('admin.delete_question', question_id=question.id) }}" style="display:inline;">
-            <button type="submit">Delete</button>
+            <button type="submit">{{ _('Delete') }}</button>
         </form>
-        <a href="{{ url_for('admin.edit_question', question_id=question.id) }}">Edit</a>
+        <a href="{{ url_for('admin.edit_question', question_id=question.id) }}">{{ _('Edit') }}</a>
     </li>
     {% endfor %}
 </ul>

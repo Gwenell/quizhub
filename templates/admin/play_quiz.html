@@ -1,23 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Play Quiz{% endblock %}
+{% block title %}{{ _('Play Quiz') }}{% endblock %}
 
 {% block content %}
-<h1>Play Quiz: {{ quiz.title }}</h1>
-{% for question in questions %}
-    <div>
-        <p>{{ question.text }}</p>
-        {% if question.media_file %}
-            {% if question.media_file.endswith(('.png', '.jpg', '.jpeg')) %}
-                <img src="{{ url_for('static', filename='quizzes/' + quiz.title + '/' + question.media_file) }}" alt="Question Image">
-            {% elif question.media_file.endswith(('.mp4', '.webm', '.ogg')) %}
-                <video width="320" height="240" controls>
-                    <source src="{{ url_for('static', filename='quizzes/' + quiz.title + '/' + question.media_file) }}">
-                    Your browser does not support the video tag.
-                </video>
+<h1>{{ _('Play Quiz') }}: {{ quiz.title }}</h1>
+<form method="post" action="{{ url_for('admin.submit_answers', quiz_id=quiz.id) }}">
+    {% for question in questions %}
+        <div>
+            <p>{{ question.text }}</p>
+            {% if question.media_file %}
+                <img src="{{ url_for('static', filename='quizzes/' + quiz.title + '/' + question.media_file) }}" alt="{{ _('Question Image') }}">
             {% endif %}
-        {% endif %}
-        <!-- Options for answers go here -->
-    </div>
-{% endfor %}
+            {% if question.type == 'multiple' %}
+                {% for option in question.options.split(',') %}
+                    <div>
+                        <input type="radio" name="answer_{{ question.id }}" value="{{ loop.index }}"> {{ option }}
+                    </div>
+                {% endfor %}
+            {% elif question.type == 'boolean' %}
+                <div>
+                    <input type="radio" name="answer_{{ question.id }}" value="true"> {{ _('True') }}
+                </div>
+                <div>
+                    <input type="radio" name="answer_{{ question.id }}" value="false"> {{ _('False') }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit">{{ _('Submit') }}</button>
+</form>
 {% endblock %}

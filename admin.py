@@ -1,26 +1,45 @@
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash
+from flask import Blueprint, render_template, redirect, url_for, request, session, flash, jsonify
 from extensions import db
-from models import Admin, Quiz
-from question_models import Question
+from models import Admin, Quiz, QuizSession, Question
 from forms import LoginForm, QuizForm, QuestionForm
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
-from utils import create_quiz_directory_and_db
+from flask_babelex import _
 import os
+import random
+import logging
 
+# Setup logger
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Blueprint for admin routes
 admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
+        logger.debug("Form submitted and validated")
         admin = Admin.query.filter_by(username=form.username.data).first()
-        if admin and check_password_hash(admin.password, form.password.data):
-            session['admin_logged_in'] = True
-            session['username'] = admin.username
-            return redirect(url_for('admin.dashboard'))
+        if admin:
+            logger.debug("Admin found")
+            if check_password_hash(admin.password, form.password.data):
+                logger.debug("Password verified")
+                session['admin_logged_in'] = True
+                session['username'] = admin.username
+                return redirect(url_for('admin.dashboard'))
+            else:
+                logger.debug(f"Password verification failed for user {form.username.data}")
         else:
-            flash('Invalid credentials')
+            logger.debug(f"Admin with username {form.username.data} not found")
+        flash(_('Invalid credentials'))
+    else:
+        if request.method == 'POST':
+            logger.debug("Form submitted but not validated")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    logger.debug(f"Error in {field}: {error}")
     return render_template('admin/login.html', form=form)
 
 @admin_bp.route('/logout')
@@ -36,18 +55,16 @@ def dashboard():
     quizzes = Quiz.query.all()
     return render_template('admin/dashboard.html', quizzes=quizzes)
 
+
 @admin_bp.route('/create_quiz', methods=['GET', 'POST'])
 def create_quiz():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.login'))
     form = QuizForm()
     if form.validate_on_submit():
-        new_quiz = Quiz(title=form.title.data, description=form.description.data, code='123456')
+        new_quiz = Quiz(title=form.title.data, description=form.description.data, code=str(random.randint(100000, 999999)))
         db.session.add(new_quiz)
         db.session.commit()
-
-        create_quiz_directory_and_db(new_quiz.title)
-
         return redirect(url_for('admin.dashboard'))
     return render_template('admin/create_quiz.html', form=form)
 
@@ -63,10 +80,7 @@ def view_quiz(quiz_id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
-    quiz_db_path = os.path.join('quizzes', secure_filename(quiz.title), 'questions.db')
-    db.create_all(bind=quiz_db_path)
-    questions = Question.query.all(bind=quiz_db_path)
-    return render_template('admin/view_quiz.html', quiz=quiz, questions=questions)
+    return render_template('admin/view_quiz.html', quiz=quiz)
 
 @admin_bp.route('/quiz/<int:quiz_id>/edit', methods=['GET', 'POST'])
 def edit_quiz(quiz_id):
@@ -74,55 +88,38 @@ def edit_quiz(quiz_id):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
     form = QuizForm(obj=quiz)
-    question_form = QuestionForm()
     if form.validate_on_submit():
         quiz.title = form.title.data
         quiz.description = form.description.data
         db.session.commit()
         return redirect(url_for('admin.dashboard'))
-    return render_template('admin/edit_quiz.html', form=form, quiz=quiz, question_form=question_form)
+    return render_template('admin/edit_quiz.html', form=form, quiz=quiz)
 
 @admin_bp.route('/quiz/<int:quiz_id>/add_question', methods=['POST'])
 def add_question(quiz_id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.login'))
-    quiz = Quiz.query.get_or_404(quiz_id)
     form = QuestionForm()
     if form.validate_on_submit():
-        quiz_dir = os.path.join('quizzes', secure_filename(quiz.title))
-        quiz_db_path = os.path.join(quiz_dir, 'questions.db')
-        db.create_all(bind=quiz_db_path)
-
-        media_file = None
-        if form.media_file.data:
-            filename = secure_filename(form.media_file.data.filename)
-            media_path = os.path.join(quiz_dir, filename)
-            form.media_file.data.save(media_path)
-            media_file = filename
-
-        correct_options = ','.join(str(index) for index, answer in enumerate(form.answers) if answer.correct.data)
-
+        quiz = Quiz.query.get_or_404(quiz_id)
         new_question = Question(
             text=form.text.data,
             type=form.type.data,
             options=','.join([answer.answer.data for answer in form.answers]),
-            correct_options=correct_options,
-            media_file=media_file
+            correct_options=','.join(str(index) for index, answer in form.answers) if answer.correct.data else "",
+            media_file=form.media_file.data.filename if form.media_file.data else None,
+            quiz_id=quiz.id
         )
         db.session.add(new_question)
-        db.session.commit(bind=quiz_db_path)
-        return redirect(url_for('admin.edit_quiz', quiz_id=quiz_id))
-    return render_template('admin/edit_quiz.html', form=QuizForm(obj=quiz), quiz=quiz, question_form=form)
+        db.session.commit()
+        return redirect(url_for('admin.view_quiz', quiz_id=quiz.id))
+    return redirect(url_for('admin.edit_quiz', quiz_id=quiz_id))
 
 @admin_bp.route('/quiz/<int:quiz_id>/delete', methods=['POST'])
 def delete_quiz(quiz_id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
-    quiz_dir = os.path.join('quizzes', secure_filename(quiz.title))
-    if os.path.exists(quiz_dir):
-        import shutil
-        shutil.rmtree(quiz_dir)
     db.session.delete(quiz)
     db.session.commit()
     return redirect(url_for('admin.dashboard'))
@@ -137,13 +134,9 @@ def edit_question(question_id):
         question.text = form.text.data
         question.type = form.type.data
         question.options = ','.join([answer.answer.data for answer in form.answers])
-        question.correct_options = ','.join(str(index) for index, answer in enumerate(form.answers) if answer.correct.data)
+        question.correct_options = ','.join(str(index) for index, answer in form.answers if answer.correct.data)
         if form.media_file.data:
-            quiz_dir = os.path.join('quizzes', secure_filename(question.quiz.title))
-            filename = secure_filename(form.media_file.data.filename)
-            media_path = os.path.join(quiz_dir, filename)
-            form.media_file.data.save(media_path)
-            question.media_file = filename
+            question.media_file = form.media_file.data.filename
         db.session.commit()
         return redirect(url_for('admin.view_quiz', quiz_id=question.quiz_id))
     return render_template('admin/edit_question.html', form=form, question=question)
@@ -163,7 +156,5 @@ def play_quiz(quiz_id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
-    quiz_db_path = os.path.join('quizzes', secure_filename(quiz.title), 'questions.db')
-    db.create_all(bind=quiz_db_path)
-    questions = Question.query.all(bind=quiz_db_path)
+    questions = Question.query.filter_by(quiz_id=quiz.id).all()
     return render_template('admin/play_quiz.html', quiz=quiz, questions=questions)

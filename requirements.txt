@@ -1,4 +1,6 @@
-Flask
-Flask-SQLAlchemy
-Flask-WTF
-werkzeug
+Flask==2.2.5
+Flask-SQLAlchemy==2.5.1
+Flask-WTF==0.15.1
+werkzeug==2.2.3
+Flask-BabelEx==0.9.4
+SQLAlchemy==1.4.31

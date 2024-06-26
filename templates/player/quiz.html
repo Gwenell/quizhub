@@ -1,8 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Quiz{% endblock %}
+{% block title %}{{ _('Quiz') }}{% endblock %}
 
 {% block content %}
-<h1>Quiz: {{ code }}</h1>
-<!-- Logique pour afficher les questions -->
+<h1>{{ _('Quiz') }}: {{ session.quiz.title }}</h1>
+<form method="post" action="{{ url_for('player.submit_answer', code=session.code) }}">
+    {% for question in session.quiz.questions %}
+        <div>
+            <p>{{ question.text }}</p>
+            {% if question.media_file %}
+                <img src="{{ url_for('static', filename='quizzes/' + session.quiz.title + '/' + question.media_file) }}" alt="{{ _('Question Image') }}">
+            {% endif %}
+            {% if question.type == 'multiple' %}
+                {% for option in question.options.split(',') %}
+                    <div>
+                        <input type="radio" name="answer_{{ question.id }}" value="{{ loop.index }}"> {{ option }}
+                    </div>
+                {% endfor %}
+            {% elif question.type == 'boolean' %}
+                <div>
+                    <input type="radio" name="answer_{{ question.id }}" value="true"> {{ _('True') }}
+                </div>
+                <div>
+                    <input type="radio" name="answer_{{ question.id }}" value="false"> {{ _('False') }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit">{{ _('Submit') }}</button>
+</form>
 {% endblock %}

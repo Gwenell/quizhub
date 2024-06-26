@@ -1,0 +1,57 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Join Quiz"
+msgstr "Join Quiz"
+
+msgid "Enter Quiz Code"
+msgstr "Enter Quiz Code"
+
+msgid "Join"
+msgstr "Join"
+
+msgid "Enter Pseudonym"
+msgstr "Enter Pseudonym"
+
+msgid "Submit"
+msgstr "Submit"
+
+msgid "Invalid code"
+msgstr "Invalid code"
+
+msgid "Invalid credentials"
+msgstr "Invalid credentials"
+
+msgid "Admin Dashboard"
+msgstr "Admin Dashboard"
+
+msgid "Create Quiz"
+msgstr "Create Quiz"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Play"
+msgstr "Play"
+
+msgid "Generate Code"
+msgstr "Generate Code"
+
+msgid "Quiz Code"
+msgstr "Quiz Code"
+
+msgid "Failed to generate quiz code"
+msgstr "Failed to generate quiz code"
+
+msgid "Question Image"
+msgstr "Question Image"
+
+msgid "True"
+msgstr "True"
+
+msgid "False"
+msgstr "False"

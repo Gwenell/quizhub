@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Join Quiz{% endblock %}
+{% block title %}{{ _('Join Quiz') }}{% endblock %}
 
 {% block content %}
-<h1>Join Quiz</h1>
-<form method="post" action="{{ url_for('player.join_quiz') }}">
-    <input type="text" name="code" placeholder="Enter Quiz Code" required>
-    <button type="submit">Join</button>
-</form>
+<div class="container">
+    <h1>{{ _('Join Quiz') }}</h1>
+    <form method="post" action="{{ url_for('player.join_quiz') }}">
+        <input type="text" name="code" placeholder="{{ _('Enter Quiz Code') }}" required>
+        <button type="submit">{{ _('Join') }}</button>
+    </form>
+</div>
 {% endblock %}

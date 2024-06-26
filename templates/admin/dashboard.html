@@ -1,20 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}{{ _('Quiz') }}{% endblock %}
 
 {% block content %}
-<h1>Admin Dashboard</h1>
-<a href="{{ url_for('admin.create_quiz') }}">Create Quiz</a>
-<ul>
-    {% for quiz in quizzes %}
-    <li>
-        {{ quiz.title }}
-        <form method="post" action="{{ url_for('admin.delete_quiz', quiz_id=quiz.id) }}" style="display:inline;">
-            <button type="submit">Delete</button>
-        </form>
-        <a href="{{ url_for('admin.edit_quiz', quiz_id=quiz.id) }}">Edit</a>
-        <a href="{{ url_for('admin.view_quiz', quiz_id=quiz.id) }}">Play</a>
-    </li>
+<h1>{{ _('Quiz') }}: {{ session.quiz.title }}</h1>
+<form method="post" action="{{ url_for('player.submit_answer', code=session.code) }}">
+    {% for question in session.quiz.questions %}
+        <div>
+            <p>{{ question.text }}</p>
+            {% if question.media_file %}
+                <img src="{{ url_for('static', filename='quizzes/' + session.quiz.title + '/' + question.media_file) }}" alt="{{ _('Question Image') }}">
+            {% endif %}
+            {% if question.type == 'multiple' %}
+                {% for option in question.options.split(',') %}
+                    <div>
+                        <input type="radio" name="answer_{{ question.id }}" value="{{ loop.index }}"> {{ option }}
+                    </div>
+                {% endfor %}
+            {% elif question.type == 'boolean' %}
+                <div>
+                    <input type="radio" name="answer_{{ question.id }}" value="true"> {{ _('True') }}
+                </div>
+                <div>
+                    <input type="radio" name="answer_{{ question.id }}" value="false"> {{ _('False') }}
+                </div>
+            {% endif %}
+        </div>
     {% endfor %}
-</ul>
+    <button type="submit">{{ _('Submit') }}</button>
+</form>
 {% endblock %}

@@ -2,6 +2,8 @@ body {
     background-color: #000000;
     color: #FF9000;
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 nav {
@@ -10,10 +12,11 @@ nav {
     padding: 10px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
 nav img {
-    height: 50px;
+    height: 60px;
     margin-right: 20px;
 }
 
@@ -21,6 +24,7 @@ nav a {
     color: #FF9000;
     text-decoration: none;
     margin: 0 10px;
+    font-size: 18px;
 }
 
 button {
@@ -29,6 +33,10 @@ button {
     border: none;
     padding: 10px 20px;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
 }
 
 button:hover {
@@ -40,6 +48,7 @@ form {
     flex-direction: column;
     max-width: 300px;
     margin: auto;
+    margin-top: 20px;  /* Adjust the margin to move the form down slightly */
 }
 
 input, select, textarea {
@@ -52,6 +61,7 @@ input, select, textarea {
 
 h1 {
     text-align: center;
+    margin-top: 20px;  /* Adjust the margin to move the header down slightly */
 }
 
 a {
@@ -72,14 +82,11 @@ a:hover {
     color: #ffb733;
 }
 
-.answer-row {
+.container {
     display: flex;
-    justify-content: space-between;
-}
-
-.answer-item {
-    display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    width: 45%;
+    text-align: center;
+    flex-direction: column;
+    padding-top: 50px; /* Add padding to move content below the nav bar */
 }

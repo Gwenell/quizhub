@@ -1,20 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Quiz App{% endblock %}</title>
+    <title>{% block title %}Quiz Hub{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}">
 </head>
 <body>
     <nav>
         <img src="{{ url_for('static', filename='img/icon.png') }}" alt="Logo">
-        <a href="{{ url_for('player.index') }}">Home</a>
-        <a href="{{ url_for('admin.login') }}">Admin Login</a>
+        <div class="nav-links">
+            {% if request.endpoint != 'player.index' %}
+                <a href="{{ url_for('player.index') }}">{{ _('Home') }}</a>
+            {% endif %}
+            <a href="{{ url_for('admin.login') }}">{{ _('Admin Login') }}</a>
+        </div>
     </nav>
     <div class="content">
         {% block content %}{% endblock %}
     </div>
-    {% block scripts %}{% endblock %}
 </body>
 </html>

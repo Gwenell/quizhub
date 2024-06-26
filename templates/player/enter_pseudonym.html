@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Enter Pseudonym') }}{% endblock %}
+
+{% block content %}
+<h1>{{ _('Enter Pseudonym') }}</h1>
+<form method="post" action="{{ url_for('player.enter_pseudonym', code=code) }}">
+    {{ form.hidden_tag() }}
+    {{ form.pseudonym.label }} {{ form.pseudonym(size=20) }}
+    {{ form.submit() }}
+</form>
+{% endblock %}
