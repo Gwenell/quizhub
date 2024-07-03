@@ -1,93 +1,76 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Quiz{% endblock %}
+{% block title %}{{ _('Edit Quiz') }}{% endblock %}
 
 {% block content %}
-<h1>Edit Quiz</h1>
-<a class="back-arrow" href="{{ url_for('admin.dashboard') }}">&larr; Back</a>
-<form method="post" action="{{ url_for('admin.edit_quiz', quiz_id=quiz.id) }}">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.title.label }} {{ form.title(size=50) }}
-    </div>
-    <div>
-        {{ form.description.label }} {{ form.description(cols=50, rows=10) }}
-    </div>
-    <div>
-        {{ form.submit() }}
-    </div>
-</form>
+    <h1>{{ _('Edit Quiz') }}</h1>
+    <form method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.title.label }}<br>
+            {{ form.title(size=32) }}
+        </p>
+        <p>
+            {{ form.description.label }}<br>
+            {{ form.description(size=32) }}
+        </p>
+        <p><input type="submit" value="{{ _('Save') }}"></p>
+    </form>
+    <h2>{{ _('Add Question') }}</h2>
+    <form method="post" action="{{ url_for('admin.add_question', quiz_id=quiz.id) }}">
+        {{ question_form.hidden_tag() }}
+        <p>
+            {{ question_form.text.label }}<br>
+            {{ question_form.text(size=64) }}
+        </p>
+        <p>
+            {{ question_form.type.label }}<br>
+            {{ question_form.type(onchange="showAnswerFields()") }}
+        </p>
+        <p>
+            {{ question_form.media_file.label }}<br>
+            {{ question_form.media_file() }}
+        </p>
+        <div id="multiple_choice_fields" style="display:none;">
+            {% for answer in question_form.answers %}
+            <p>
+                {{ answer.answer.label }}<br>
+                {{ answer.answer(size=64) }}
+                {{ answer.correct() }} {{ _('Correct') }}
+            </p>
+            {% endfor %}
+        </div>
+        <div id="true_false_fields" style="display:none;">
+            <p>
+                <input type="radio" name="true_false_answer" value="True" id="true">
+                <label for="true">True</label>
+                <input type="radio" name="true_false_answer" value="False" id="false">
+                <label for="false">False</label>
+            </p>
+        </div>
+        <p><input type="submit" value="{{ _('Add Question') }}"></p>
+    </form>
 
-<h2>Add Question</h2>
-<form method="post" action="{{ url_for('admin.add_question', quiz_id=quiz.id) }}" enctype="multipart/form-data">
-    {{ question_form.hidden_tag() }}
-    <div>
-        {{ question_form.text.label }} {{ question_form.text(size=100) }}
-    </div>
-    <div>
-        {{ question_form.type.label }} {{ question_form.type() }}
-    </div>
-    <div class="answers-container">
-        {% if question_form.type.data == 'boolean' %}
-        <div>
-            <input type="checkbox" name="correct_1"> True
-        </div>
-        <div>
-            <input type="checkbox" name="correct_2"> False
-        </div>
-        {% else %}
-        <div class="answer-row">
-            {% if question_form.answers|length > 0 %}
-            <div class="answer-item">
-                {{ question_form.answers[0].answer.label }} {{ question_form.answers[0].answer(size=50) }}
-                {{ question_form.answers[0].correct() }}
-            </div>
-            {% endif %}
-            {% if question_form.answers|length > 1 %}
-            <div class="answer-item">
-                {{ question_form.answers[1].answer.label }} {{ question_form.answers[1].answer(size=50) }}
-                {{ question_form.answers[1].correct() }}
-            </div>
-            {% endif %}
-        </div>
-        <div class="answer-row">
-            {% if question_form.answers|length > 2 %}
-            <div class="answer-item">
-                {{ question_form.answers[2].answer.label }} {{ question_form.answers[2].answer(size=50) }}
-                {{ question_form.answers[2].correct() }}
-            </div>
-            {% endif %}
-            {% if question_form.answers|length > 3 %}
-            <div class="answer-item">
-                {{ question_form.answers[3].answer.label }} {{ question_form.answers[3].answer(size=50) }}
-                {{ question_form.answers[3].correct() }}
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-    </div>
-    <div>
-        {{ question_form.media_file.label }} {{ question_form.media_file() }}
-    </div>
-    <div>
-        {{ question_form.submit() }}
-    </div>
-</form>
+    <script>
+        function showAnswerFields() {
+            var questionType = document.querySelector('select[name="type"]').value;
+            var multipleChoiceFields = document.getElementById('multiple_choice_fields');
+            var trueFalseFields = document.getElementById('true_false_fields');
 
-<h2>Existing Questions</h2>
-<ul>
-    {% for question in questions %}
-    <li>
-        {{ question.text }}
-        <form method="post" action="{{ url_for('admin.delete_question', question_id=question.id) }}" style="display:inline;">
-            <button type="submit">Delete</button>
-        </form>
-        <a href="{{ url_for('admin.edit_question', question_id=question.id) }}">Edit</a>
-    </li>
-    {% endfor %}
-</ul>
-{% endblock %}
+            if (questionType === 'multiple_choice') {
+                multipleChoiceFields.style.display = 'block';
+                trueFalseFields.style.display = 'none';
+            } else if (questionType === 'true_false') {
+                multipleChoiceFields.style.display = 'none';
+                trueFalseFields.style.display = 'block';
+            } else {
+                multipleChoiceFields.style.display = 'none';
+                trueFalseFields.style.display = 'none';
+            }
+        }
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+        document.addEventListener('DOMContentLoaded', function() {
+            showAnswerFields(); // Call the function to set the correct display when the page loads
+        });
+    </script>
 {% endblock %}

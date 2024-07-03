@@ -17,16 +17,16 @@ class QuizForm(FlaskForm):
 
 # Form for creating answers within a question
 class AnswerForm(FlaskForm):
-    answer = StringField(_('Answer'), validators=[DataRequired()])
-    correct = BooleanField(_('Correct'))
+    answer = StringField('Answer', validators=[DataRequired()])
+    correct = BooleanField('Correct')
 
 # Form for creating a new question
 class QuestionForm(FlaskForm):
-    text = StringField(_('Question Text'), validators=[DataRequired()])
-    type = SelectField(_('Type'), choices=[('multiple', _('Multiple Choice')), ('boolean', _('True/False'))], validators=[DataRequired()])
-    answers = FieldList(FormField(AnswerForm), min_entries=2, max_entries=4)
-    media_file = FileField(_('Media File'))
-    submit = SubmitField(_('Add Question'))
+    text = StringField('Question', validators=[DataRequired()])
+    type = SelectField('Type', choices=[('multiple_choice', 'Multiple Choice'), ('true_false', 'True/False')], validators=[DataRequired()])
+    media_file = FileField('Media File')
+    answers = FieldList(FormField(AnswerForm), min_entries=4)
+    submit = SubmitField('Add Question')
 
 # Form for player to enter pseudonym
 class PlayerForm(FlaskForm):

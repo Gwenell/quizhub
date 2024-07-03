@@ -55,7 +55,6 @@ def dashboard():
     quizzes = Quiz.query.all()
     return render_template('admin/dashboard.html', quizzes=quizzes)
 
-
 @admin_bp.route('/create_quiz', methods=['GET', 'POST'])
 def create_quiz():
     if not session.get('admin_logged_in'):
@@ -88,25 +87,34 @@ def edit_quiz(quiz_id):
         return redirect(url_for('admin.login'))
     quiz = Quiz.query.get_or_404(quiz_id)
     form = QuizForm(obj=quiz)
+    question_form = QuestionForm()
     if form.validate_on_submit():
         quiz.title = form.title.data
         quiz.description = form.description.data
         db.session.commit()
         return redirect(url_for('admin.dashboard'))
-    return render_template('admin/edit_quiz.html', form=form, quiz=quiz)
+    return render_template('admin/edit_quiz.html', form=form, quiz=quiz, question_form=question_form)
 
 @admin_bp.route('/quiz/<int:quiz_id>/add_question', methods=['POST'])
 def add_question(quiz_id):
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.login'))
     form = QuestionForm()
+
     if form.validate_on_submit():
         quiz = Quiz.query.get_or_404(quiz_id)
+        if form.type.data == 'multiple_choice':
+            options = [answer_form.answer.data for answer_form in form.answers]
+            correct_options = [i for i, answer_form in enumerate(form.answers) if answer_form.correct.data]
+        else:  # True/False
+            options = ['True', 'False']
+            correct_options = [0] if request.form.get('true_false_answer') == 'True' else [1]
+
         new_question = Question(
             text=form.text.data,
             type=form.type.data,
-            options=','.join([answer.answer.data for answer in form.answers]),
-            correct_options=','.join(str(index) for index, answer in form.answers) if answer.correct.data else "",
+            options=','.join(options),
+            correct_options=','.join(map(str, correct_options)),
             media_file=form.media_file.data.filename if form.media_file.data else None,
             quiz_id=quiz.id
         )
@@ -114,6 +122,7 @@ def add_question(quiz_id):
         db.session.commit()
         return redirect(url_for('admin.view_quiz', quiz_id=quiz.id))
     return redirect(url_for('admin.edit_quiz', quiz_id=quiz_id))
+
 
 @admin_bp.route('/quiz/<int:quiz_id>/delete', methods=['POST'])
 def delete_quiz(quiz_id):

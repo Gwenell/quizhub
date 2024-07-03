@@ -2,22 +2,31 @@
 <html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Quiz Hub{% endblock %}</title>
+    <title>{% block title %}{% endblock %} - Quiz Hub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}">
 </head>
 <body>
-    <nav>
-        <img src="{{ url_for('static', filename='img/icon.png') }}" alt="Logo">
-        <div class="nav-links">
-            {% if request.endpoint != 'player.index' %}
-                <a href="{{ url_for('player.index') }}">{{ _('Home') }}</a>
-            {% endif %}
-            <a href="{{ url_for('admin.login') }}">{{ _('Admin Login') }}</a>
-        </div>
-    </nav>
-    <div class="content">
+    <header>
+        <nav>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/icon.png') }}" alt="Quiz Hub Logo">
+            </div>
+            <ul>
+                {% if request.endpoint == 'player.index' %}
+                    <li><a href="{{ url_for('admin.login') }}">{{ _('Admin Login') }}</a></li>
+                {% elif request.endpoint == 'admin.login' %}
+                    <li><a href="{{ url_for('player.index') }}">{{ _('Home') }}</a></li>
+                {% elif request.endpoint == 'admin.dashboard' %}
+                    <li><a href="{{ url_for('player.index') }}">{{ _('Home') }}</a></li>
+                {% elif request.endpoint.startswith('admin.') %}
+                    <li><a href="{{ url_for('admin.dashboard') }}">{{ _('Dashboard') }}</a></li>
+                    <li><a href="{{ url_for('player.index') }}">{{ _('Home') }}</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+    <main>
         {% block content %}{% endblock %}
-    </div>
+    </main>
 </body>
 </html>

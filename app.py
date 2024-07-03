@@ -12,7 +12,7 @@ import random
 from flask_migrate import Migrate
 
 # Initialize Flask app
-app = Flask(__name__, instance_relative_config=True)
+app = Flask(__name__)
 app.config.from_object(Config)
 
 # Initialize Babel for localization
