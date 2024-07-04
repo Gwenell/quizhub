@@ -3,30 +3,119 @@
 {% block title %}{{ _('Quiz') }}{% endblock %}
 
 {% block content %}
-<h1>{{ _('Quiz') }}: {{ session.quiz.title }}</h1>
-<form method="post" action="{{ url_for('player.submit_answer', code=session.code) }}">
-    {% for question in session.quiz.questions %}
-        <div>
-            <p>{{ question.text }}</p>
-            {% if question.media_file %}
-                <img src="{{ url_for('static', filename='quizzes/' + session.quiz.title + '/' + question.media_file) }}" alt="{{ _('Question Image') }}">
-            {% endif %}
-            {% if question.type == 'multiple' %}
-                {% for option in question.options.split(',') %}
-                    <div>
-                        <input type="radio" name="answer_{{ question.id }}" value="{{ loop.index }}"> {{ option }}
-                    </div>
-                {% endfor %}
-            {% elif question.type == 'boolean' %}
-                <div>
-                    <input type="radio" name="answer_{{ question.id }}" value="true"> {{ _('True') }}
-                </div>
-                <div>
-                    <input type="radio" name="answer_{{ question.id }}" value="false"> {{ _('False') }}
-                </div>
-            {% endif %}
-        </div>
-    {% endfor %}
-    <button type="submit">{{ _('Submit') }}</button>
-</form>
+    <h1>{{ _('Quiz') }}</h1>
+    <div id="timer"></div>
+    <div id="question-container">
+        <h2 id="question-text"></h2>
+        <img id="question-image" src="" alt="Question Image" style="display: none;">
+        <div id="options-container"></div>
+    </div>
+    <button id="submit-answer" style="display: none;">{{ _('Submit Answer') }}</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentQuestion;
+let timeLeft;
+let timerInterval;
+
+function loadQuestion() {
+    fetch(`{{ url_for('player.get_question', session_id=session_id) }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.finished) {
+                window.location.href = "{{ url_for('player.results', session_id=session_id) }}";
+                return;
+            }
+            currentQuestion = data;
+            displayQuestion();
+            startTimer();
+        });
+}
+
+function displayQuestion() {
+    document.getElementById('question-text').textContent = currentQuestion.question;
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    if (currentQuestion.image) {
+        const img = document.getElementById('question-image');
+        img.src = `/static/question_images/${currentQuestion.image}`;
+        img.style.display = 'block';
+    } else {
+        document.getElementById('question-image').style.display = 'none';
+    }
+
+    if (currentQuestion.type === 'multiple_choice') {
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.onclick = () => selectAnswer(index);
+            optionsContainer.appendChild(button);
+        });
+    } else {
+        const trueButton = document.createElement('button');
+        trueButton.textContent = 'True';
+        trueButton.onclick = () => selectAnswer('true');
+        optionsContainer.appendChild(trueButton);
+
+        const falseButton = document.createElement('button');
+        falseButton.textContent = 'False';
+        falseButton.onclick = () => selectAnswer('false');
+        optionsContainer.appendChild(falseButton);
+    }
+
+    document.getElementById('submit-answer').style.display = 'block';
+}
+
+function selectAnswer(answer) {
+    // Highlight selected answer
+}
+
+function submitAnswer() {
+    const selectedAnswer = getSelectedAnswer();
+    if (!selectedAnswer) {
+        alert("{{ _('Please select an answer') }}");
+        return;
+    }
+
+    fetch("{{ url_for('player.submit_answer') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `session_id={{ session_id }}&question_id=${currentQuestion.id}&answer=${selectedAnswer}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(timerInterval);
+        showResult(data);
+        setTimeout(loadQuestion, 3000);
+    });
+}
+
+function startTimer() {
+    timeLeft = currentQuestion.time_limit;
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitAnswer();
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    document.getElementById('timer').textContent = `Time left: ${timeLeft}s`;
+}
+
+function showResult(data) {
+    // Display if the answer was correct and show the correct answer
+}
+
+document.getElementById('submit-answer').addEventListener('click', submitAnswer);
+loadQuestion();
+</script>
 {% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Quiz Results') }}{% endblock %}
+
+{% block content %}
+    <h1>{{ _('Quiz Results') }}</h1>
+    <h2>{{ quiz.title }}</h2>
+
+    <h3>{{ _('Your Score') }}</h3>
+    <p>{{ current_player.name }}: {{ current_player.score }}</p>
+
+    <h3>{{ _('Leaderboard') }}</h3>
+    <ol>
+        {% for player in players %}
+            <li>{{ player.name }}: {{ player.score }}</li>
+        {% endfor %}
+    </ol>
+
+    <a href="{{ url_for('player.index') }}">{{ _('Join Another Quiz') }}</a>
+{% endblock %}
